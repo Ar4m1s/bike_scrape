@@ -14,15 +14,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ids = get_ids(overview);
     let prefix = "<hr></hr>";
 
-    std::fs::write(file_name, "<h1>Oversikt over kjøp<h1>".to_owned() + prefix)?;
+    std::fs::write(file_name, "<h1>Ordreoversikt<h1>".to_owned() + prefix)?;
+
+    let substitution = "href='https://bikeshop.no";
+    let regex = Regex::new(r"(?m)href='").unwrap();
 
     for id in ids {
         let a = download_order(&client, id).await?;
-        let table = parse_order(a);
-        std::fs::write(
-            file_name,
-            std::fs::read_to_string(file_name)? + &table.join("\n") + "</table>\n" + prefix,
-        )?;
+
+        let table = parse_order(a).join("\n") + "</table>\n" + prefix;
+        let table = regex.replace_all(&table, substitution);
+
+        std::fs::write(file_name, std::fs::read_to_string(file_name)? + &table)?;
     }
 
     Ok(())
